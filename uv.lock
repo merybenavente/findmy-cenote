@@ -47,41 +47,6 @@ wheels = [
 ]
 
 [[package]]
-name = "cenotes"
-version = "0.1.0"
-source = { virtual = "." }
-dependencies = [
-    { name = "dask" },
-    { name = "numpy" },
-    { name = "odc-stac" },
-    { name = "pillow" },
-    { name = "planetary-computer" },
-    { name = "pymupdf" },
-    { name = "pystac-client" },
-    { name = "rasterio" },
-    { name = "scikit-image" },
-    { name = "scipy" },
-    { name = "whitebox" },
-    { name = "xarray" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "dask", specifier = ">=2024.0" },
-    { name = "numpy", specifier = ">=2.4.4" },
-    { name = "odc-stac", specifier = ">=0.4" },
-    { name = "pillow", specifier = ">=12.2.0" },
-    { name = "planetary-computer", specifier = ">=1.0" },
-    { name = "pymupdf", specifier = ">=1.27.2.2" },
-    { name = "pystac-client", specifier = ">=0.8" },
-    { name = "rasterio", specifier = ">=1.5.0" },
-    { name = "scikit-image", specifier = ">=0.24" },
-    { name = "scipy", specifier = ">=1.14" },
-    { name = "whitebox", specifier = ">=2.3.4" },
-    { name = "xarray", specifier = ">=2024.0" },
-]
-
-[[package]]
 name = "certifi"
 version = "2026.2.25"
 source = { registry = "https://pypi.org/simple" }
@@ -226,6 +191,41 @@ wheels = [
 [package.optional-dependencies]
 array = [
     { name = "numpy" },
+]
+
+[[package]]
+name = "findmycenote"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "dask" },
+    { name = "numpy" },
+    { name = "odc-stac" },
+    { name = "pillow" },
+    { name = "planetary-computer" },
+    { name = "pymupdf" },
+    { name = "pystac-client" },
+    { name = "rasterio" },
+    { name = "scikit-image" },
+    { name = "scipy" },
+    { name = "whitebox" },
+    { name = "xarray" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "dask", specifier = ">=2024.0" },
+    { name = "numpy", specifier = ">=2.4.4" },
+    { name = "odc-stac", specifier = ">=0.4" },
+    { name = "pillow", specifier = ">=12.2.0" },
+    { name = "planetary-computer", specifier = ">=1.0" },
+    { name = "pymupdf", specifier = ">=1.27.2.2" },
+    { name = "pystac-client", specifier = ">=0.8" },
+    { name = "rasterio", specifier = ">=1.5.0" },
+    { name = "scikit-image", specifier = ">=0.24" },
+    { name = "scipy", specifier = ">=1.14" },
+    { name = "whitebox", specifier = ">=2.3.4" },
+    { name = "xarray", specifier = ">=2024.0" },
 ]
 
 [[package]]
