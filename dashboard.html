@@ -868,7 +868,7 @@ function activateOverlay(id, checked) {
 }
 
 // ── Load data and initialize ─────────────────────────────────────────────
-fetch('data/cenotes_unified.json')
+fetch('https://huggingface.co/datasets/merybenavente/cenote-atlas/resolve/main/cenotes_unified.json')
   .then(r => r.json())
   .then(data => {
     DATA = data;

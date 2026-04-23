@@ -6,7 +6,7 @@
 
 An open data project to map and enrich every cenote in the Yucatan Peninsula. The **Cenote Atlas** dataset aggregates 1,369 cenotes from 10 open data sources with terrain analysis, vegetation indices, fracture proximity, and more.
 
-[Live Explorer](TODO) | [Cenote Atlas on HuggingFace](TODO) | [Cenote Atlas on Zenodo](TODO)
+[Live Explorer](TODO) | [Cenote Atlas on HuggingFace](https://huggingface.co/datasets/merybenavente/cenote-atlas) | [Cenote Atlas on Zenodo](TODO)
 
 ## Why
 
