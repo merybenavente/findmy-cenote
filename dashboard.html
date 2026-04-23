@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FindMy Cenote</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root {
+  --deep:  #0B3D3A;
+  --teal:  #0E6F6B;
+  --jade:  #1FA38E;
+  --turq:  #4FD1C5;
+  --mint:  #9BE7D8;
+  --stone: #F3ECDC;
+  --cream: #FAF6EC;
+  --sun:   #F4B544;
+  --ink:   #0A1E1D;
+  --coral: #E86A4B;
+  --muted: rgba(250,246,236,0.5);
+  --muted-75: rgba(250,246,236,0.75);
+  --border: rgba(250,246,236,0.08);
+  --border-light: rgba(250,246,236,0.12);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Space Grotesk', system-ui, sans-serif; background: var(--ink); color: var(--cream); }
+#app { display: grid; grid-template-columns: 360px 1fr; grid-template-rows: auto 1fr; height: 100vh; }
+
+/* ── Header ─────────────────────────────────────────── */
+header {
+  grid-column: 1/-1; background: var(--deep);
+  padding: 0 24px; height: 52px;
+  display: flex; align-items: center; gap: 16px;
+  border-bottom: 1px solid var(--border-light);
+}
+.header-brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.header-brand h1 { font-size: 17px; font-weight: 700; color: var(--cream); letter-spacing: -0.01em; }
+.header-brand h1 span { color: var(--mint); }
+.header-search {
+  flex: 1; max-width: 400px; margin: 0 auto; position: relative;
+}
+.header-search input {
+  width: 100%; background: var(--ink); border: 1px solid var(--border-light);
+  color: var(--cream); padding: 7px 14px 7px 32px; border-radius: 6px;
+  font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 13px;
+  outline: none; transition: border-color 150ms;
+}
+.header-search input::placeholder { color: var(--muted); }
+.header-search input:focus { border-color: var(--jade); }
+.header-search::before {
+  content: '\2315'; position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+  color: var(--muted); font-size: 14px; pointer-events: none;
+}
+.header-right { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+.header-chip {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500;
+  color: var(--jade); background: rgba(31,163,142,0.12);
+  padding: 4px 10px; border-radius: 4px;
+}
+.header-coords {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted);
+}
+
+/* ── Sidebar ────────────────────────────────────────── */
+#sidebar {
+  background: var(--deep); overflow-y: auto;
+  padding: 16px 20px; border-right: 1px solid var(--border-light);
+}
+.section { padding: 16px 0; border-bottom: 1px solid var(--border); }
+.section:first-child { padding-top: 0; }
+.section:last-child { border-bottom: none; }
+.section-label {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 8px;
+}
+
+/* Segmented buttons */
+.seg-group { display: flex; gap: 4px; flex-wrap: wrap; }
+.seg-btn {
+  background: transparent; border: 1px solid var(--border-light);
+  color: rgba(250,246,236,0.6); padding: 5px 10px; border-radius: 6px;
+  font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 12px;
+  cursor: pointer; height: 28px; transition: all 150ms;
+}
+.seg-btn:hover { color: var(--cream); border-color: rgba(250,246,236,0.25); }
+.seg-btn.active { background: var(--jade); color: var(--ink); border-color: var(--jade); }
+
+/* Custom checkboxes */
+.check-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 0; cursor: pointer; transition: background 150ms;
+  margin: 0 -20px; padding-left: 20px; padding-right: 20px;
+}
+.check-row:hover { background: rgba(250,246,236,0.04); }
+.check-row input { display: none; }
+.check-box {
+  width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0;
+  border: 1.5px solid rgba(250,246,236,0.3); background: transparent;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 150ms;
+}
+.check-row input:checked + .check-box {
+  background: var(--jade); border-color: var(--jade);
+}
+.check-box::after {
+  content: ''; display: block; width: 8px; height: 5px;
+  border-left: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--ink);
+  transform: rotate(-45deg) translateY(-1px); opacity: 0;
+}
+.check-row input:checked + .check-box::after { opacity: 1; }
+.check-label { font-size: 13px; color: var(--muted-75); }
+.check-row input:checked ~ .check-label { color: var(--cream); }
+
+/* Radio buttons */
+.radio-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; cursor: pointer; }
+.radio-row input { display: none; }
+.radio-dot {
+  width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0;
+  border: 1.5px solid rgba(250,246,236,0.3); background: transparent;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 150ms;
+}
+.radio-dot::after {
+  content: ''; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--jade); opacity: 0; transition: opacity 150ms;
+}
+.radio-row input:checked + .radio-dot { border-color: var(--jade); }
+.radio-row input:checked + .radio-dot::after { opacity: 1; }
+.radio-label { font-size: 13px; color: var(--muted-75); }
+
+/* Custom dropdowns */
+.custom-select {
+  position: relative; width: 100%;
+}
+.custom-select-btn {
+  width: 100%; background: var(--ink); border: 1px solid var(--border-light);
+  color: var(--cream); padding: 7px 32px 7px 12px; border-radius: 6px;
+  font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 13px;
+  cursor: pointer; text-align: left; transition: border-color 150ms;
+}
+.custom-select-btn:hover { border-color: rgba(250,246,236,0.25); }
+.custom-select-btn::after {
+  content: '\25BE'; position: absolute; right: 12px; top: 50%;
+  transform: translateY(-50%); color: var(--muted); font-size: 12px;
+}
+.custom-select-menu {
+  display: none; position: absolute; top: calc(100% + 4px); left: 0;
+  width: 100%; background: var(--deep); border: 1px solid var(--border-light);
+  border-radius: 6px; padding: 4px 0; z-index: 100;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+.custom-select-menu.open { display: block; }
+.custom-select-opt {
+  padding: 7px 12px; font-size: 13px; cursor: pointer;
+  color: var(--muted-75); transition: all 100ms;
+}
+.custom-select-opt:hover { background: rgba(250,246,236,0.04); color: var(--cream); }
+.custom-select-opt.active { color: var(--jade); }
+
+/* Legend */
+.legend { margin-top: 8px; }
+.legend-item { display: flex; align-items: center; gap: 10px; font-size: 12px; margin: 3px 0; }
+.legend-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+/* NDVI controls */
+.ndvi-controls { margin-left: 22px; margin-top: 4px; display: none; }
+.ndvi-controls input[type="range"] { width: 100%; accent-color: var(--jade); }
+.ndvi-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+
+/* ── Cenote list cards ──────────────────────────────── */
+#cenote-list { margin-top: 8px; }
+.cenote-card {
+  background: transparent; border: 1px solid var(--border);
+  border-radius: 6px; padding: 12px 14px; margin-bottom: 6px;
+  cursor: pointer; transition: all 150ms;
+}
+.cenote-card:hover { border-color: rgba(31,163,142,0.5); background: rgba(31,163,142,0.04); }
+.cenote-card .name { font-size: 15px; font-weight: 600; color: var(--cream); }
+.cenote-card .meta {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted); margin-top: 2px;
+}
+.cenote-card .hero {
+  margin-top: 8px; display: flex; align-items: baseline; gap: 6px;
+}
+.cenote-card .hero-val {
+  font-family: 'JetBrains Mono', monospace; font-size: 22px;
+  font-weight: 500; color: var(--cream);
+}
+.cenote-card .hero-label {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
+}
+.cenote-card .stats-row {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: rgba(250,246,236,0.6); margin-top: 6px;
+}
+.cenote-card .no-depth {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: var(--muted); margin-top: 6px; font-style: italic;
+}
+
+/* ── Detail panel ───────────────────────────────────── */
+#detail-panel {
+  display: none; position: fixed; right: 20px; top: 64px;
+  width: 360px; background: var(--deep); border: 1px solid var(--border-light);
+  border-radius: 8px; padding: 20px; z-index: 1000;
+  max-height: calc(100vh - 80px); overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+#detail-panel .close {
+  position: absolute; top: 12px; right: 16px; cursor: pointer;
+  color: var(--muted); font-size: 18px; transition: color 150ms;
+}
+#detail-panel .close:hover { color: var(--cream); }
+#detail-panel h2 { font-size: 18px; font-weight: 600; color: var(--cream); margin-bottom: 2px; }
+#detail-panel .aka { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+#detail-panel .loc {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: var(--muted); margin-bottom: 16px;
+}
+#detail-panel table { width: 100%; font-size: 12px; border-collapse: collapse; }
+#detail-panel td { padding: 5px 0; border-bottom: 1px solid var(--border); }
+#detail-panel td:first-child { color: var(--muted-75); }
+#detail-panel td:last-child { text-align: right; font-weight: 500; font-family: 'JetBrains Mono', monospace; }
+#detail-panel .bar-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: 11px; }
+#detail-panel .bar { height: 6px; background: var(--jade); border-radius: 3px; min-width: 2px; }
+#detail-panel .bar-bg { flex: 1; height: 6px; background: var(--ink); border-radius: 3px; overflow: hidden; }
+#detail-panel .detail-section {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted); margin-top: 16px; margin-bottom: 8px;
+  padding-top: 12px; border-top: 1px solid var(--border);
+}
+#detail-panel .sig-badge {
+  margin-top: 8px; padding: 8px 12px; background: var(--ink);
+  border-radius: 4px; font-size: 12px;
+}
+
+#map { min-height: 0; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="header-brand">
+      <h1>FindMy <span>Cenote</span></h1>
+    </div>
+    <div class="header-search">
+      <input type="text" id="search-input" placeholder="Find cenote or coordinates..."/>
+    </div>
+    <div class="header-right">
+      <div class="header-chip" id="count-display">0 cenotes</div>
+      <div class="header-coords" id="map-coords">20.7°N 89.0°W</div>
+    </div>
+  </header>
+  <div id="sidebar">
+
+    <div class="section">
+      <div class="section-label">Color by</div>
+      <div class="seg-group" id="color-buttons">
+        <button class="seg-btn active" data-field="depth">Depth</button>
+        <button class="seg-btn" data-field="depression">Depression</button>
+        <button class="seg-btn" data-field="lineament">Lineament</button>
+        <button class="seg-btn" data-field="ndvi">NDVI</button>
+        <button class="seg-btn" data-field="geology">Rock age</button>
+        <button class="seg-btn" data-field="elevation">Elevation</button>
+      </div>
+      <div class="legend" id="legend"></div>
+    </div>
+
+
+    <div class="section">
+      <div class="section-label">Map layers</div>
+      <label class="check-row"><input type="checkbox" id="toggle-dem" checked><span class="check-box"></span><span class="check-label">Terrain elevation</span></label>
+      <label class="check-row"><input type="checkbox" id="toggle-age"><span class="check-box"></span><span class="check-label">Rock age</span></label>
+      <label class="check-row"><input type="checkbox" id="toggle-lith"><span class="check-box"></span><span class="check-label">Rock type</span></label>
+      <label class="check-row"><input type="checkbox" id="toggle-lineaments"><span class="check-box"></span><span class="check-label">Lineaments (fractures)</span></label>
+      <label class="check-row"><input type="checkbox" id="toggle-lin-density"><span class="check-box"></span><span class="check-label">Lineament density</span></label>
+      <label class="check-row"><input type="checkbox" id="toggle-ndvi"><span class="check-box"></span><span class="check-label">Vegetation (NDVI)</span></label>
+      <div class="ndvi-controls" id="ndvi-controls">
+        <input type="range" id="ndvi-season" min="0" max="2" value="2" step="1">
+        <div class="ndvi-labels"><span>Dry</span><span>Wet</span><span>Anomaly</span></div>
+      </div>
+      <label class="check-row"><input type="checkbox" id="toggle-roads"><span class="check-box"></span><span class="check-label">Roads</span></label>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Municipality</div>
+      <div class="custom-select" id="muni-select">
+        <div class="custom-select-btn" id="muni-btn">All</div>
+        <div class="custom-select-menu" id="muni-menu"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Show only</div>
+      <div class="custom-select" id="depth-select">
+        <div class="custom-select-btn" id="depth-btn">All cenotes</div>
+        <div class="custom-select-menu" id="depth-menu">
+          <div class="custom-select-opt active" data-value="all">All cenotes</div>
+          <div class="custom-select-opt" data-value="deep">With depth data only</div>
+          <div class="custom-select-opt" data-value="nodepth">Without depth data</div>
+          <div class="custom-select-opt" data-value="deep50">Depth &gt; 50m</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Sort by</div>
+      <div class="custom-select" id="sort-select">
+        <div class="custom-select-btn" id="sort-btn">Depth (deepest first)</div>
+        <div class="custom-select-menu" id="sort-menu">
+          <div class="custom-select-opt active" data-value="depth">Depth (deepest first)</div>
+          <div class="custom-select-opt" data-value="depression">Depression @250m</div>
+          <div class="custom-select-opt" data-value="lineament">Lineament (closest first)</div>
+          <div class="custom-select-opt" data-value="ndvi">NDVI anomaly</div>
+          <div class="custom-select-opt" data-value="name">Name</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="cenote-list"></div>
+  </div>
+  <div id="map"></div>
+</div>
+<div id="detail-panel">
+  <span class="close" onclick="closeDetail()">&times;</span>
+  <div id="detail-content"></div>
+</div>
+
+<script>
+let DATA = [];
+let map, markers = [], ringCircle, demOverlay, ageOverlay, lithOverlay;
+let lineamentLines = [], linDensityOverlay, ndviOverlay, roadMarkers = [];
+let currentColor = 'depth';
+let roadsLoaded = false, lineamentsLoaded = false, ndviLoaded = false, linDensityLoaded = false;
+let darkTiles, satTiles, currentBase;
+let selectedMarker = null;
+let filterMuni = '', filterDepth = 'all', sortBy = 'depth';
+
+const CRATER = { lat: 21.4, lon: -89.5, radius_km: 82.5 };
+const NDVI_URLS = ['data/ndvi_dry_overlay.webp', 'data/ndvi_wet_overlay.webp', 'data/ndvi_anomaly_overlay.webp'];
+
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2-lat1)*Math.PI/180;
+  const dLon = (lon2-lon1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R*2*Math.asin(Math.sqrt(a));
+}
+
+// ── Custom select logic ──────────────────────────────────────────────────
+function initCustomSelect(btnId, menuId, onChange) {
+  const btn = document.getElementById(btnId);
+  const menu = document.getElementById(menuId);
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    document.querySelectorAll('.custom-select-menu.open').forEach(m => { if (m !== menu) m.classList.remove('open'); });
+    menu.classList.toggle('open');
+  });
+  menu.addEventListener('click', e => {
+    const opt = e.target.closest('.custom-select-opt');
+    if (!opt) return;
+    menu.querySelectorAll('.custom-select-opt').forEach(o => o.classList.remove('active'));
+    opt.classList.add('active');
+    btn.textContent = opt.textContent;
+    menu.classList.remove('open');
+    onChange(opt.dataset.value);
+  });
+}
+document.addEventListener('click', () => {
+  document.querySelectorAll('.custom-select-menu.open').forEach(m => m.classList.remove('open'));
+});
+
+// ── Search ───────────────────────────────────────────────────────────────
+document.getElementById('search-input').addEventListener('input', e => {
+  const q = e.target.value.toLowerCase().trim();
+  if (!q) { render(); return; }
+  const match = DATA.find(c => c.name && c.name.toLowerCase().includes(q));
+  if (match) {
+    showDetail(match);
+  }
+});
+
+// ── Map init ─────────────────────────────────────────────────────────────
+function initMap() {
+  const yucBounds = [[19.5, -91.0], [21.7, -87.0]];
+  map = L.map('map', { zoomControl: true }).fitBounds(yucBounds, { padding: [40, 40] });
+
+  darkTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
+    attribution: 'CartoDB', maxZoom: 19
+  });
+  satTiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Esri', maxZoom: 19
+  });
+  currentBase = satTiles;
+  satTiles.addTo(map);
+
+  // DEM + geology overlays
+  fetch('data/dem_overlay_bounds.json').then(r=>r.json()).then(b => {
+    const bounds = [[b.south, b.west],[b.north, b.east]];
+    demOverlay = L.imageOverlay('data/dem_overlay.webp', bounds, {
+      opacity: 0.6, interactive: false
+    }).addTo(map);
+    ageOverlay = L.imageOverlay('data/geology_age_overlay.png', bounds, {
+      opacity: 0.7, interactive: false
+    });
+    lithOverlay = L.imageOverlay('data/geology_lith_overlay.png', bounds, {
+      opacity: 0.7, interactive: false
+    });
+  });
+
+  // Chicxulub ring — animated
+  ringCircle = L.circle([CRATER.lat, CRATER.lon], {
+    radius: CRATER.radius_km * 1000,
+    color: 'rgba(250,246,236,0.4)', weight: 1.5, fill: false,
+    dashArray: '4,6'
+  }).addTo(map);
+
+  // Crater center dot
+  L.circleMarker([CRATER.lat, CRATER.lon], {
+    radius: 3, color: '#F4B544', fillColor: '#F4B544', fillOpacity: 0.8, weight: 0
+  }).addTo(map).bindTooltip('Chicxulub impact center');
+
+  // Update coords on move
+  map.on('moveend', () => {
+    const c = map.getCenter();
+    document.getElementById('map-coords').textContent =
+      `${c.lat.toFixed(1)}°N ${Math.abs(c.lng).toFixed(1)}°W`;
+  });
+
+  // Preload NDVI images
+  NDVI_URLS.forEach(url => { new Image().src = url; });
+}
+
+
+// ── Color schemes ────────────────────────────────────────────────────────
+function getColor(c) {
+  if (currentColor === 'depth') {
+    if (!c.depth) return '#F3ECDC';
+    if (c.depth >= 100) return '#F4B544';
+    if (c.depth >= 50) return '#4FD1C5';
+    if (c.depth >= 30) return '#9BE7D8';
+    return '#0E6F6B';
+  }
+  if (currentColor === 'depression') {
+    const d = c.depression_250m || 0;
+    if (d > 5) return '#1FA38E';
+    if (d > 2) return '#0E6F6B';
+    if (d > 0) return '#aaaacc';
+    if (d > -2) return '#F3ECDC';
+    return '#E86A4B';
+  }
+  if (currentColor === 'lineament') {
+    const d = c.lineament_dist_min;
+    if (d == null) return '#555';
+    if (d < 50) return '#F4B544';
+    if (d < 200) return '#4FD1C5';
+    if (d < 500) return '#9BE7D8';
+    if (d < 1000) return '#0E6F6B';
+    return '#335577';
+  }
+  if (currentColor === 'ndvi') {
+    const z = c.ndvi_zscore || 0;
+    if (z > 2) return '#1FA38E';
+    if (z > 1) return '#0E6F6B';
+    if (z > -1) return '#aaaacc';
+    if (z > -2) return '#4FD1C5';
+    return '#F4B544';
+  }
+  if (currentColor === 'geology') {
+    const age = c.geology_age || '';
+    if (age === 'Eocene') return '#FDB46C';
+    if (age === 'Neogene') return '#FFE619';
+    if (age === 'Miocene') return '#FFFF00';
+    if (age === 'Cenozoic') return '#F2EDAC';
+    return '#888';
+  }
+  if (currentColor === 'elevation') {
+    const e = c.elevation || 0;
+    if (e > 60) return '#F4B544';
+    if (e > 30) return '#4FD1C5';
+    if (e > 15) return '#9BE7D8';
+    return '#0E6F6B';
+  }
+  return '#888';
+}
+
+function getRadius(c) {
+  if (c.depth) return Math.max(3, Math.min(10, 3 + c.depth / 20));
+  return 3;
+}
+
+function getLegendHTML() {
+  const legends = {
+    depth: [['#F4B544','100m+'],['#4FD1C5','50–100m'],['#9BE7D8','30–50m'],['#0E6F6B','<30m'],['#F3ECDC','No data']],
+    depression: [['#1FA38E','>5m (deep)'],['#0E6F6B','2–5m'],['#aaaacc','0–2m'],['#F3ECDC','0 to -2m'],['#E86A4B','< -2m (hill)']],
+    lineament: [['#F4B544','<50m (on fracture)'],['#4FD1C5','50–200m'],['#9BE7D8','200–500m'],['#0E6F6B','500m–1km'],['#335577','>1km']],
+    ndvi: [['#1FA38E','z>2 (anomalous green)'],['#0E6F6B','z 1–2'],['#aaaacc','z -1 to 1 (normal)'],['#4FD1C5','z -2 to -1'],['#F4B544','z<-2 (anomalous dry)']],
+    geology: [['#FDB46C','Eocene (34–56 Ma)'],['#FFE619','Neogene (<23 Ma)'],['#F2EDAC','Cenozoic (general)'],['#888','Unknown']],
+    elevation: [['#F4B544','>60m'],['#4FD1C5','30–60m'],['#9BE7D8','15–30m'],['#0E6F6B','<15m']],
+  };
+  return (legends[currentColor]||[]).map(([c,l]) =>
+    `<div class="legend-item"><div class="legend-dot" style="background:${c}"></div>${l}</div>`
+  ).join('');
+}
+
+// ── Filter & sort ────────────────────────────────────────────────────────
+function filterData() {
+  return DATA.filter(c => {
+    if (filterMuni && c.municipio !== filterMuni) return false;
+    if (filterDepth === 'deep' && !c.depth) return false;
+    if (filterDepth === 'nodepth' && c.depth) return false;
+    if (filterDepth === 'deep50' && (!c.depth || c.depth < 50)) return false;
+    return true;
+  });
+}
+
+function sortData(data) {
+  return [...data].sort((a, b) => {
+    if (sortBy === 'depth') return (b.depth || 0) - (a.depth || 0);
+    if (sortBy === 'depression') return (b.depression_250m || 0) - (a.depression_250m || 0);
+    if (sortBy === 'lineament') return (a.lineament_dist_min ?? 99999) - (b.lineament_dist_min ?? 99999);
+    if (sortBy === 'ndvi') return Math.abs(b.ndvi_zscore || 0) - Math.abs(a.ndvi_zscore || 0);
+    if (sortBy === 'name') return (a.name || '').localeCompare(b.name || '');
+    return 0;
+  });
+}
+
+// ── Render ────────────────────────────────────────────────────────────────
+function render() {
+  markers.forEach(m => map.removeLayer(m));
+  markers = [];
+
+  let filtered = filterData();
+  document.getElementById('count-display').textContent = filtered.length + ' cenotes';
+  document.getElementById('legend').innerHTML = getLegendHTML();
+
+  filtered.forEach(c => {
+    const color = getColor(c);
+    const r = getRadius(c);
+    const m = L.circleMarker([c.lat, c.lon], {
+      radius: r,
+      fillColor: color,
+      color: color,
+      weight: 0,
+      fillOpacity: 0.8
+    }).addTo(map);
+
+    const tip = `<b>${c.name}</b>${c.depth ? '<br>'+c.depth+'m deep' : ''}<br>${c.municipio || ''}`;
+    m.bindTooltip(tip, { direction: 'top' });
+    m.on('click', () => showDetail(c));
+    m._cenote = c;
+    markers.push(m);
+  });
+
+  // Sidebar list
+  let sorted = sortData(filtered);
+  const list = document.getElementById('cenote-list');
+  const shown = sorted.slice(0, 100);
+  list.innerHTML = shown.map(c => {
+    const depthHtml = c.depth
+      ? `<div class="hero"><span class="hero-val">${c.depth}m</span><span class="hero-label">deep</span></div>`
+      : `<div class="no-depth">depth unknown</div>`;
+    const stats = [];
+    if (c.elevation != null) stats.push(`elev ${c.elevation.toFixed(0)}m`);
+    if (c.depression_250m != null) stats.push(`dep250 ${c.depression_250m.toFixed(1)}m`);
+    if (c.lineament_dist_min != null) stats.push(`fract ${c.lineament_dist_min.toFixed(0)}m`);
+    if (c.ndvi_zscore != null) stats.push(`ndvi z ${c.ndvi_zscore.toFixed(1)}`);
+
+    return `<div class="cenote-card" onclick='showDetail(${JSON.stringify(c).replace(/'/g,"\\'")})'">
+      <div class="name">${c.name}</div>
+      <div class="meta">${c.municipio || '?'} · ${c.topo || '?'}</div>
+      ${depthHtml}
+      ${stats.length ? `<div class="stats-row">${stats.join(' · ')}</div>` : ''}
+    </div>`;
+  }).join('') + (sorted.length > 100 ? `<div style="text-align:center;padding:12px;color:var(--muted);font-size:12px;">+${sorted.length-100} more</div>` : '');
+}
+
+// ── Detail panel ──────────────────────────────────────────────────────────
+function showDetail(c) {
+  // Clear previous selection ring
+  if (selectedMarker) { map.removeLayer(selectedMarker); selectedMarker = null; }
+
+  // Add selection ring
+  selectedMarker = L.circleMarker([c.lat, c.lon], {
+    radius: 12, color: '#F4B544', fillColor: 'transparent',
+    weight: 2, fillOpacity: 0
+  }).addTo(map);
+
+  const panel = document.getElementById('detail-panel');
+  const distCenter = haversine(CRATER.lat, CRATER.lon, c.lat, c.lon);
+  const distRing = distCenter - CRATER.radius_km;
+  const onRing = Math.abs(distRing) < 15 ? 'ON RING' : distRing > 0 ? 'Outside' : 'Inside';
+
+  let html = `<h2>${c.name}</h2>`;
+  if (c.alt_names) html += `<div class="aka">aka ${c.alt_names}</div>`;
+  html += `<div class="loc">${c.lat.toFixed(5)}°N, ${Math.abs(c.lon).toFixed(5)}°W · ${c.municipio || '?'} · ${c.topo || '?'}${c.dem_resolution ? ' · DEM '+c.dem_resolution : ''}</div>`;
+
+  html += `<table>`;
+  if (c.depth) html += `<tr><td>Measured depth</td><td style="color:var(--sun);font-size:16px">${c.depth}m</td></tr>`;
+  if (c.length) html += `<tr><td>Length</td><td>${c.length}m</td></tr>`;
+  html += `<tr><td>Surface elevation</td><td>${c.elevation?.toFixed(1) || '?'}m</td></tr>`;
+  html += `<tr><td>Dist to crater center</td><td>${distCenter.toFixed(1)}km</td></tr>`;
+  html += `<tr><td>Ring position</td><td style="color:${Math.abs(distRing)<15?'var(--jade)':'var(--muted)'}">${onRing} (${distRing>0?'+':''}${distRing.toFixed(1)}km)</td></tr>`;
+  html += `</table>`;
+
+  if (!c.has_terrain) {
+    html += `<div class="sig-badge" style="text-align:center;color:var(--muted);margin-top:16px;">No terrain analysis data available</div>`;
+    document.getElementById('detail-content').innerHTML = html;
+    panel.style.display = 'block';
+      return;
+  }
+
+  // Depression profile
+  html += `<div class="detail-section">Depression Profile</div>`;
+  const maxDep = 15;
+  [['50m', c.depression_50m], ['100m', c.depression_100m], ['250m', c.depression_250m], ['500m', c.depression_500m]].forEach(([label, val]) => {
+    if (val == null) return;
+    const w = Math.min(100, Math.max(2, Math.abs(val) / maxDep * 100));
+    const col = val > 0 ? 'var(--jade)' : 'var(--coral)';
+    html += `<div class="bar-row">
+      <span style="width:40px;font-family:'JetBrains Mono',monospace;font-size:11px">${label}</span>
+      <div class="bar-bg"><div class="bar" style="width:${w}%;background:${col}"></div></div>
+      <span style="width:50px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:11px">${val > 0 ? '+' : ''}${val.toFixed(1)}m</span>
+    </div>`;
+  });
+
+  html += `<table style="margin-top:8px">`;
+  if (c.mean_slope != null) html += `<tr><td>Mean slope (100m)</td><td>${c.mean_slope.toFixed(1)}°</td></tr>`;
+  if (c.max_slope != null) html += `<tr><td>Max slope (100m)</td><td>${c.max_slope.toFixed(1)}°</td></tr>`;
+  if (c.roughness != null) html += `<tr><td>Roughness (250m)</td><td>${c.roughness.toFixed(2)}m</td></tr>`;
+  if (c.elev_percentile != null) html += `<tr><td>Elev percentile (500m)</td><td>${c.elev_percentile.toFixed(0)}%</td></tr>`;
+  if (c.min_elev_250m != null) html += `<tr><td>Elev range @250m</td><td>${c.min_elev_250m.toFixed(0)}–${c.max_elev_250m?.toFixed(0) || '?'}m</td></tr>`;
+  html += `</table>`;
+
+  // Surface signature
+  const dep = c.depression_250m || 0;
+  const pct = c.elev_percentile || 50;
+  let sig, sigCol;
+  if (dep > 3 && pct < 15) { sig = 'Strong depression'; sigCol = 'var(--jade)'; }
+  else if (dep > 1) { sig = 'Moderate depression'; sigCol = 'var(--turq)'; }
+  else if (dep < 0.5 && (c.mean_slope||0) < 1.5) { sig = 'Flat — no visible depression'; sigCol = 'var(--coral)'; }
+  else { sig = 'Weak / ambiguous'; sigCol = 'var(--muted)'; }
+  html += `<div class="sig-badge">Surface signature: <span style="color:${sigCol};font-weight:600">${sig}</span></div>`;
+
+  // Geology & hydrology
+  if (c.lithology || c.sink_depth != null) {
+    html += `<div class="detail-section">Geology & Hydrology</div>`;
+    html += `<table>`;
+    if (c.lithology) html += `<tr><td>Geology</td><td>${c.lithology} (${c.geology_age || '?'}${c.age_ma_top ? ', '+c.age_ma_top+'–'+c.age_ma_bottom+' Ma' : ''})</td></tr>`;
+    if (c.coast_distance_km != null) html += `<tr><td>Distance to coast</td><td>${c.coast_distance_km.toFixed(1)} km</td></tr>`;
+    if (c.sink_depth != null) html += `<tr><td>Sink depth (100m)</td><td>${c.sink_depth.toFixed(2)}m</td></tr>`;
+    if (c.in_depression != null) html += `<tr><td>In depression</td><td style="color:${c.in_depression?'var(--jade)':'var(--muted)'}">${c.in_depression ? 'YES' : 'No'}</td></tr>`;
+    if (c.depression_area != null && c.depression_area > 0) html += `<tr><td>Depression area</td><td>${(c.depression_area/1000).toFixed(1)}k m²</td></tr>`;
+    if (c.flow_accum != null) html += `<tr><td>Flow accumulation</td><td>${c.flow_accum.toFixed(0)}</td></tr>`;
+    html += `</table>`;
+  }
+
+  // Fracture proximity
+  if (c.lineament_dist_min != null) {
+    html += `<div class="detail-section">Fracture Proximity</div>`;
+    html += `<table>`;
+    const ld = c.lineament_dist_min;
+    html += `<tr><td>Nearest lineament</td><td style="color:${ld<50?'var(--sun)':ld<200?'var(--turq)':'var(--cream)'}">${ld.toFixed(0)}m</td></tr>`;
+    if (c.lineament_count_500m != null) html += `<tr><td>Lineaments in 500m</td><td>${c.lineament_count_500m}</td></tr>`;
+    if (c.lineament_azimuth != null) html += `<tr><td>Dominant azimuth</td><td>${c.lineament_azimuth.toFixed(0)}°</td></tr>`;
+    if (c.on_lineament) html += `<tr><td>On lineament</td><td style="color:var(--sun)">YES</td></tr>`;
+    html += `</table>`;
+  }
+
+  // Vegetation
+  if (c.ndvi_dry != null || c.canopy_height != null) {
+    html += `<div class="detail-section">Vegetation</div>`;
+    html += `<table>`;
+    if (c.ndvi_dry != null) html += `<tr><td>NDVI (dry season)</td><td>${c.ndvi_dry.toFixed(3)}</td></tr>`;
+    if (c.ndvi_diff != null) html += `<tr><td>NDVI diff (wet–dry)</td><td>${c.ndvi_diff.toFixed(3)}</td></tr>`;
+    if (c.ndvi_zscore != null) html += `<tr><td>NDVI z-score</td><td style="color:${Math.abs(c.ndvi_zscore)>2?'var(--sun)':'var(--cream)'}">${c.ndvi_zscore.toFixed(2)}</td></tr>`;
+    if (c.canopy_height != null) html += `<tr><td>Canopy height</td><td>${c.canopy_height.toFixed(1)}m</td></tr>`;
+    if (c.canopy_gap_fraction != null) html += `<tr><td>Canopy gap fraction</td><td>${(c.canopy_gap_fraction*100).toFixed(1)}%</td></tr>`;
+    html += `</table>`;
+  }
+
+  document.getElementById('detail-content').innerHTML = html;
+  panel.style.display = 'block';
+}
+
+function closeDetail() {
+  document.getElementById('detail-panel').style.display = 'none';
+  if (selectedMarker) { map.removeLayer(selectedMarker); selectedMarker = null; }
+}
+
+// ── Inject selected marker pulse ─────────────────────────────────────────
+
+// ── Load data and initialize ─────────────────────────────────────────────
+fetch('data/cenotes_unified.json')
+  .then(r => r.json())
+  .then(data => {
+    DATA = data;
+
+    // Populate municipality dropdown
+    const munis = [...new Set(data.map(c => c.municipio).filter(Boolean))].sort();
+    const muniMenu = document.getElementById('muni-menu');
+    muniMenu.innerHTML = '<div class="custom-select-opt active" data-value="">All</div>' +
+      munis.map(m => {
+        const count = data.filter(c => c.municipio === m).length;
+        return `<div class="custom-select-opt" data-value="${m}">${m} (${count})</div>`;
+      }).join('');
+
+    initMap();
+    render();
+  });
+
+// ── Event listeners ──────────────────────────────────────────────────────
+initCustomSelect('muni-btn', 'muni-menu', v => { filterMuni = v; render(); });
+initCustomSelect('depth-btn', 'depth-menu', v => { filterDepth = v; render(); });
+initCustomSelect('sort-btn', 'sort-menu', v => { sortBy = v; render(); });
+
+
+// Layer toggles
+document.getElementById('toggle-dem').addEventListener('change', e => {
+  if (!demOverlay) return;
+  if (e.target.checked) demOverlay.addTo(map); else map.removeLayer(demOverlay);
+});
+document.getElementById('toggle-age').addEventListener('change', e => {
+  if (!ageOverlay) return;
+  if (e.target.checked) ageOverlay.addTo(map); else map.removeLayer(ageOverlay);
+});
+document.getElementById('toggle-lith').addEventListener('change', e => {
+  if (!lithOverlay) return;
+  if (e.target.checked) lithOverlay.addTo(map); else map.removeLayer(lithOverlay);
+});
+
+document.getElementById('toggle-lineaments').addEventListener('change', e => {
+  if (e.target.checked) {
+    if (!lineamentsLoaded) {
+      fetch('data/lineaments_display.json').then(r=>r.json()).then(lins => {
+        lins.forEach(l => {
+          const ori = l.ori || 0;
+          let color;
+          if (ori < 22.5 || ori >= 157.5) color = '#4FD1C5';
+          else if (ori < 67.5) color = '#9BE7D8';
+          else if (ori < 112.5) color = '#1FA38E';
+          else color = '#0E6F6B';
+          const line = L.polyline([[l.la1, l.lo1], [l.la2, l.lo2]], {
+            color, weight: 1.5, opacity: 0.4
+          }).addTo(map);
+          lineamentLines.push(line);
+        });
+        lineamentsLoaded = true;
+      }).catch(() => console.log('lineaments not found'));
+    } else {
+      lineamentLines.forEach(l => l.addTo(map));
+    }
+  } else {
+    lineamentLines.forEach(l => map.removeLayer(l));
+  }
+});
+
+document.getElementById('toggle-lin-density').addEventListener('change', e => {
+  if (e.target.checked) {
+    if (!linDensityLoaded) {
+      fetch('data/lineament_density_bounds.json').then(r=>r.json()).then(b => {
+        const bounds = [[b.south, b.west],[b.north, b.east]];
+        linDensityOverlay = L.imageOverlay('data/lineament_density_overlay.webp', bounds, {
+          opacity: 0.7, interactive: false
+        }).addTo(map);
+        linDensityLoaded = true;
+      }).catch(() => console.log('lineament density overlay not found'));
+    } else if (linDensityOverlay) {
+      linDensityOverlay.addTo(map);
+    }
+  } else if (linDensityOverlay) {
+    map.removeLayer(linDensityOverlay);
+  }
+});
+
+document.getElementById('toggle-ndvi').addEventListener('change', e => {
+  const controls = document.getElementById('ndvi-controls');
+  if (e.target.checked) {
+    controls.style.display = 'block';
+    if (!ndviLoaded) {
+      fetch('data/ndvi_overlay_bounds.json').then(r=>r.json()).then(b => {
+        const bounds = [[b.south, b.west],[b.north, b.east]];
+        const idx = parseInt(document.getElementById('ndvi-season').value);
+        ndviOverlay = L.imageOverlay(NDVI_URLS[idx], bounds, {
+          opacity: 0.7, interactive: false
+        }).addTo(map);
+        ndviLoaded = true;
+      }).catch(() => console.log('NDVI overlay not found'));
+    } else if (ndviOverlay) {
+      ndviOverlay.addTo(map);
+    }
+  } else {
+    controls.style.display = 'none';
+    if (ndviOverlay) map.removeLayer(ndviOverlay);
+  }
+});
+
+document.getElementById('ndvi-season').addEventListener('input', e => {
+  if (ndviOverlay) {
+    ndviOverlay.setUrl(NDVI_URLS[parseInt(e.target.value)]);
+  }
+});
+
+document.getElementById('toggle-roads').addEventListener('change', e => {
+  if (e.target.checked) {
+    if (!roadsLoaded) {
+      fetch('data/roads.json').then(r=>r.json()).then(roads => {
+        roads.forEach(r => {
+          const color = r.tp === 'primary' ? '#F4B54488' : '#9BE7D833';
+          const m = L.circleMarker([r.la, r.lo], {
+            radius: 1.5, fillColor: color, color: color, weight: 0, fillOpacity: 0.6
+          }).addTo(map);
+          roadMarkers.push(m);
+        });
+        roadsLoaded = true;
+      });
+    } else {
+      roadMarkers.forEach(m => m.addTo(map));
+    }
+  } else {
+    roadMarkers.forEach(m => map.removeLayer(m));
+  }
+});
+
+document.getElementById('color-buttons').addEventListener('click', e => {
+  if (!e.target.classList.contains('seg-btn')) return;
+  document.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+  e.target.classList.add('active');
+  currentColor = e.target.dataset.field;
+  render();
+});
+</script>
+</body>
+</html>

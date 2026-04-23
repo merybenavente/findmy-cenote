@@ -12,3 +12,4 @@ wheels/
 
 # Data lives on HuggingFace, not in the repo
 data/
+.DS_Store
