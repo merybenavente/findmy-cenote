@@ -10,7 +10,7 @@ An enriched dataset of 1,369 cenotes in the Yucatan Peninsula, combining 10 open
 
 ## Why
 
-I'm a freediver. The deepest cenote in the Yucatan suitable for depth freediving is Cenote Ucil, at just under 100m (328ft) of vertical drop. I wanted to find out if there could be another one — deeper, undiscovered — hiding somewhere in the peninsula. So I set out to explore whether AI and open data could reveal patterns in where deep cenotes form, and point to the most likely areas to find one with even better conditions.
+I'm a freediver. The deepest cenote in the Yucatan suitable for depth freediving is Ucil, at just under 100m (328ft) of vertical drop. I wanted to find out if there could be another one — deeper, undiscovered — hiding somewhere in the peninsula. So I set out to explore whether AI and open data could reveal patterns in where deep cenotes form, and point to the most likely areas to find one with even better conditions.
 
 For now, this round publishes only the aggregated dataset — I don't have a conclusive method yet for predicting depth from surface features. If you're working on something similar, or if you're open to running field expeditions on land, reach out at hi@merybenavente.me — that kind of ground-truth data could help narrow down the search areas significantly.
 
