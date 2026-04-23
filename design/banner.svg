@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 250">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&amp;family=JetBrains+Mono:wght@400');
+    </style>
+  </defs>
+  <rect width="800" height="250" fill="#0B3D3A"/>
+
+  <!-- Ring of Cenotes mark (200x200) -->
+  <g transform="translate(60, 25)">
+    <svg viewBox="0 0 256 256" width="200" height="200">
+      <g transform="rotate(135 128 128)">
+        <!-- Outer arc dots -->
+        <circle cx="62.68" cy="193.32" r="4.54" fill="#FAF6EC"/>
+        <circle cx="42.88" cy="166.31" r="3.22" fill="#FAF6EC"/>
+        <circle cx="35.94" cy="133.57" r="3.05" fill="#FAF6EC"/>
+        <circle cx="36.78" cy="99.58" r="4.24" fill="#FAF6EC"/>
+        <circle cx="55.24" cy="70.99" r="4.92" fill="#FAF6EC"/>
+        <circle cx="79.39" cy="47.60" r="3.40" fill="#FAF6EC"/>
+        <circle cx="111.09" cy="35.73" r="5.00" fill="#FAF6EC"/>
+        <circle cx="144.59" cy="37.48" r="2.90" fill="#FAF6EC"/>
+        <circle cx="175.67" cy="49.15" r="2.83" fill="#FAF6EC"/>
+        <circle cx="202.69" cy="69.48" r="4.72" fill="#FAF6EC"/>
+        <circle cx="219.02" cy="99.64" r="4.38" fill="#FAF6EC"/>
+        <circle cx="223.44" cy="133.77" r="2.85" fill="#FAF6EC"/>
+        <circle cx="213.92" cy="166.67" r="2.86" fill="#FAF6EC"/>
+        <circle cx="194.91" cy="194.91" r="2.92" fill="#FAF6EC"/>
+        <!-- Inner arc dots -->
+        <circle cx="76.10" cy="161.71" r="2.38" fill="#9BE7D8"/>
+        <circle cx="66.08" cy="141.73" r="3.03" fill="#9BE7D8"/>
+        <circle cx="66.39" cy="119.34" r="3.48" fill="#9BE7D8"/>
+        <circle cx="73.99" cy="98.68" r="2.35" fill="#9BE7D8"/>
+        <circle cx="87.28" cy="81.15" r="3.19" fill="#9BE7D8"/>
+        <circle cx="105.99" cy="69.12" r="2.80" fill="#9BE7D8"/>
+        <circle cx="128.00" cy="64.83" r="2.53" fill="#9BE7D8"/>
+        <circle cx="149.93" cy="69.35" r="2.72" fill="#9BE7D8"/>
+        <circle cx="168.65" cy="81.24" r="2.50" fill="#9BE7D8"/>
+        <circle cx="182.94" cy="98.17" r="2.01" fill="#9BE7D8"/>
+        <circle cx="189.53" cy="119.35" r="2.75" fill="#9BE7D8"/>
+        <circle cx="187.09" cy="141.10" r="3.19" fill="#9BE7D8"/>
+        <circle cx="179.85" cy="161.67" r="2.50" fill="#9BE7D8"/>
+      </g>
+      <!-- Center pin -->
+      <circle cx="128" cy="128" r="15" fill="#0B3D3A" stroke="#FAF6EC" stroke-width="2.5"/>
+      <circle cx="128" cy="128" r="7" fill="#9BE7D8"/>
+    </svg>
+  </g>
+
+  <!-- Wordmark (centered in right half) -->
+  <text x="500" y="120" font-family="'Space Grotesk', system-ui, sans-serif" font-weight="700" font-size="52" letter-spacing="-0.02em" fill="#FAF6EC" text-anchor="middle">FindMy <tspan fill="#9BE7D8">Cenote</tspan></text>
+  <text x="500" y="152" font-family="'JetBrains Mono', monospace" font-size="12" letter-spacing="0.18em" fill="rgba(250,246,236,0.55)" text-anchor="middle">YUCATÁN · CENOTE ATLAS</text>
+</svg>
