@@ -1,0 +1,20 @@
+[project]
+name = "findmycenote"
+version = "0.1.0"
+description = "Enriched dataset and interactive explorer for 1,369 cenotes in the Yucatan Peninsula"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=2.4.4",
+    "pillow>=12.2.0",
+    "pymupdf>=1.27.2.2",
+    "rasterio>=1.5.0",
+    "whitebox>=2.3.4",
+    "scikit-image>=0.24",
+    "scipy>=1.14",
+    "planetary-computer>=1.0",
+    "pystac-client>=0.8",
+    "odc-stac>=0.4",
+    "xarray>=2024.0",
+    "dask>=2024.0",
+]
