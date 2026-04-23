@@ -10,7 +10,6 @@
   <g transform="translate(60, 25)">
     <svg viewBox="0 0 256 256" width="200" height="200">
       <g transform="rotate(135 128 128)">
-        <!-- Outer arc dots -->
         <circle cx="62.68" cy="193.32" r="4.54" fill="#FAF6EC"/>
         <circle cx="42.88" cy="166.31" r="3.22" fill="#FAF6EC"/>
         <circle cx="35.94" cy="133.57" r="3.05" fill="#FAF6EC"/>
@@ -25,7 +24,6 @@
         <circle cx="223.44" cy="133.77" r="2.85" fill="#FAF6EC"/>
         <circle cx="213.92" cy="166.67" r="2.86" fill="#FAF6EC"/>
         <circle cx="194.91" cy="194.91" r="2.92" fill="#FAF6EC"/>
-        <!-- Inner arc dots -->
         <circle cx="76.10" cy="161.71" r="2.38" fill="#9BE7D8"/>
         <circle cx="66.08" cy="141.73" r="3.03" fill="#9BE7D8"/>
         <circle cx="66.39" cy="119.34" r="3.48" fill="#9BE7D8"/>
@@ -40,13 +38,12 @@
         <circle cx="187.09" cy="141.10" r="3.19" fill="#9BE7D8"/>
         <circle cx="179.85" cy="161.67" r="2.50" fill="#9BE7D8"/>
       </g>
-      <!-- Center pin -->
       <circle cx="128" cy="128" r="15" fill="#0B3D3A" stroke="#FAF6EC" stroke-width="2.5"/>
       <circle cx="128" cy="128" r="7" fill="#9BE7D8"/>
     </svg>
   </g>
 
-  <!-- Wordmark (centered in right half, vertically aligned with logo center) -->
-  <text x="320" y="118" font-family="'Space Grotesk', system-ui, sans-serif" font-weight="700" font-size="52" letter-spacing="-0.02em" fill="#FAF6EC">FindMy <tspan fill="#9BE7D8">Cenote</tspan></text>
-  <text x="320" y="148" font-family="'JetBrains Mono', monospace" font-size="12" letter-spacing="0.18em" fill="rgba(250,246,236,0.55)">YUCATÁN · CENOTE ATLAS</text>
+  <!-- Wordmark — left-aligned at same x -->
+  <text x="300" y="118" font-family="'Space Grotesk', system-ui, sans-serif" font-weight="700" font-size="52" letter-spacing="-0.02em" fill="#FAF6EC" text-anchor="start">FindMy <tspan fill="#9BE7D8">Cenote</tspan></text>
+  <text x="302" y="148" font-family="'JetBrains Mono', monospace" font-size="12" letter-spacing="0.18em" fill="rgba(250,246,236,0.55)" text-anchor="start">YUCATÁN · CENOTE ATLAS</text>
 </svg>
