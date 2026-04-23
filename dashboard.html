@@ -243,7 +243,27 @@ header {
   border-radius: 4px; font-size: 12px;
 }
 
-#map { min-height: 0; }
+#map { min-height: 0; position: relative; }
+
+/* ── Overlay legend ─────────────────────────────────── */
+#overlay-legend {
+  display: none; position: absolute; bottom: 24px; left: 24px; z-index: 800;
+  background: rgba(10,30,29,0.85); backdrop-filter: blur(8px);
+  border: 1px solid var(--border-light); border-radius: 6px;
+  padding: 10px 14px; font-size: 11px;
+}
+#overlay-legend .ol-title {
+  font-family: 'JetBrains Mono', monospace; font-size: 9px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 6px;
+}
+#overlay-legend .ol-row {
+  display: flex; align-items: center; gap: 8px; margin: 2px 0;
+}
+#overlay-legend .ol-swatch {
+  width: 16px; height: 8px; border-radius: 2px; flex-shrink: 0;
+}
+#overlay-legend .ol-label { color: var(--cream); font-size: 11px; }
 </style>
 </head>
 <body>
@@ -278,17 +298,19 @@ header {
 
     <div class="section">
       <div class="section-label">Map layers</div>
-      <label class="check-row"><input type="checkbox" id="toggle-dem" checked><span class="check-box"></span><span class="check-label">Terrain elevation</span></label>
-      <label class="check-row"><input type="checkbox" id="toggle-age"><span class="check-box"></span><span class="check-label">Rock age</span></label>
-      <label class="check-row"><input type="checkbox" id="toggle-lith"><span class="check-box"></span><span class="check-label">Rock type</span></label>
-      <label class="check-row"><input type="checkbox" id="toggle-lineaments"><span class="check-box"></span><span class="check-label">Lineaments (fractures)</span></label>
-      <label class="check-row"><input type="checkbox" id="toggle-lin-density"><span class="check-box"></span><span class="check-label">Lineament density</span></label>
-      <label class="check-row"><input type="checkbox" id="toggle-ndvi"><span class="check-box"></span><span class="check-label">Vegetation (NDVI)</span></label>
+      <label class="radio-row"><input type="radio" name="overlay" value="satellite" id="toggle-satellite" checked><span class="radio-dot"></span><span class="radio-label">Satellite</span></label>
+      <label class="radio-row"><input type="radio" name="overlay" value="dem" id="toggle-dem"><span class="radio-dot"></span><span class="radio-label">Terrain elevation</span></label>
+      <label class="radio-row"><input type="radio" name="overlay" value="age" id="toggle-age"><span class="radio-dot"></span><span class="radio-label">Rock age</span></label>
+      <label class="radio-row"><input type="radio" name="overlay" value="lith" id="toggle-lith"><span class="radio-dot"></span><span class="radio-label">Rock type</span></label>
+      <label class="radio-row"><input type="radio" name="overlay" value="lineaments" id="toggle-lineaments"><span class="radio-dot"></span><span class="radio-label">Lineaments (fractures)</span></label>
+      <label class="radio-row"><input type="radio" name="overlay" value="linDensity" id="toggle-lin-density"><span class="radio-dot"></span><span class="radio-label">Lineament density</span></label>
+      <label class="radio-row"><input type="radio" name="overlay" value="ndvi" id="toggle-ndvi"><span class="radio-dot"></span><span class="radio-label">Vegetation (NDVI)</span></label>
       <div class="ndvi-controls" id="ndvi-controls">
         <input type="range" id="ndvi-season" min="0" max="2" value="2" step="1">
         <div class="ndvi-labels"><span>Dry</span><span>Wet</span><span>Anomaly</span></div>
       </div>
-      <label class="check-row"><input type="checkbox" id="toggle-roads"><span class="check-box"></span><span class="check-label">Roads</span></label>
+      <label class="radio-row"><input type="radio" name="overlay" value="canopy" id="toggle-canopy"><span class="radio-dot"></span><span class="radio-label">Canopy height</span></label>
+      <label class="radio-row"><input type="radio" name="overlay" value="roads" id="toggle-roads"><span class="radio-dot"></span><span class="radio-label">Roads</span></label>
     </div>
 
     <div class="section">
@@ -328,7 +350,9 @@ header {
 
     <div id="cenote-list"></div>
   </div>
-  <div id="map"></div>
+  <div id="map">
+    <div id="overlay-legend"></div>
+  </div>
 </div>
 <div id="detail-panel">
   <span class="close" onclick="closeDetail()">&times;</span>
@@ -340,8 +364,9 @@ let DATA = [];
 let map, markers = [], ringCircle, demOverlay, ageOverlay, lithOverlay;
 let lineamentLines = [], linDensityOverlay, ndviOverlay, roadMarkers = [];
 let currentColor = 'depth';
-let roadsLoaded = false, lineamentsLoaded = false, ndviLoaded = false, linDensityLoaded = false;
-let darkTiles, satTiles, currentBase;
+let roadsLoaded = false, lineamentsLoaded = false, ndviLoaded = false, linDensityLoaded = false, canopyLoaded = false;
+let canopyOverlay;
+let darkTiles, satTiles, whiteTiles, currentBase;
 let selectedMarker = null;
 let filterMuni = '', filterDepth = 'all', sortBy = 'depth';
 
@@ -400,6 +425,9 @@ function initMap() {
   satTiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
     attribution: 'Esri', maxZoom: 19
   });
+  whiteTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+    attribution: 'CartoDB', maxZoom: 19
+  });
   currentBase = satTiles;
   satTiles.addTo(map);
 
@@ -407,13 +435,13 @@ function initMap() {
   fetch('data/dem_overlay_bounds.json').then(r=>r.json()).then(b => {
     const bounds = [[b.south, b.west],[b.north, b.east]];
     demOverlay = L.imageOverlay('data/dem_overlay.webp', bounds, {
-      opacity: 0.6, interactive: false
-    }).addTo(map);
+      opacity: 0.9, interactive: false
+    });
     ageOverlay = L.imageOverlay('data/geology_age_overlay.png', bounds, {
-      opacity: 0.7, interactive: false
+      opacity: 0.9, interactive: false
     });
     lithOverlay = L.imageOverlay('data/geology_lith_overlay.png', bounds, {
-      opacity: 0.7, interactive: false
+      opacity: 0.9, interactive: false
     });
   });
 
@@ -549,9 +577,9 @@ function render() {
     const m = L.circleMarker([c.lat, c.lon], {
       radius: r,
       fillColor: color,
-      color: color,
-      weight: 0,
-      fillOpacity: 0.8
+      color: '#0A1E1D',
+      weight: 1,
+      fillOpacity: 0.9
     }).addTo(map);
 
     const tip = `<b>${c.name}</b>${c.depth ? '<br>'+c.depth+'m deep' : ''}<br>${c.municipio || ''}`;
@@ -699,6 +727,146 @@ function closeDetail() {
 
 // ── Inject selected marker pulse ─────────────────────────────────────────
 
+// ── Overlay legends ──────────────────────────────────────────────────────
+const OVERLAY_LEGENDS = {
+  dem: {
+    title: 'Terrain elevation',
+    stops: [
+      ['#2d6a4f', 'Low (0–15m)'],
+      ['#52b788', '15–30m'],
+      ['#95d5b2', '30–60m'],
+      ['#d8f3dc', '60m+'],
+    ]
+  },
+  age: {
+    title: 'Rock age',
+    stops: [
+      ['#FDB46C', 'Eocene (34–56 Ma)'],
+      ['#FFE619', 'Neogene (<23 Ma)'],
+      ['#F2EDAC', 'Cenozoic (general)'],
+    ]
+  },
+  lith: {
+    title: 'Rock type',
+    stops: [
+      ['#d4c5a0', 'Limestone'],
+      ['#a89070', 'Dolomite'],
+      ['#8c7a60', 'Evaporite'],
+    ]
+  },
+  lineaments: {
+    title: 'Lineament orientation',
+    stops: [
+      ['#4FD1C5', 'N–S'],
+      ['#9BE7D8', 'NE–SW'],
+      ['#1FA38E', 'E–W'],
+      ['#0E6F6B', 'NW–SE'],
+    ]
+  },
+  linDensity: {
+    title: 'Lineament density',
+    stops: [
+      ['#0B3D3A', 'Low'],
+      ['#0E6F6B', 'Medium'],
+      ['#4FD1C5', 'High'],
+      ['#F4B544', 'Very high'],
+    ]
+  },
+  ndvi: {
+    title: 'Vegetation (NDVI)',
+    stops: [
+      ['#a08c64', 'Bare / low'],
+      ['#508c2d', 'Moderate'],
+      ['#1e6419', 'Dense'],
+      ['#0f4b12', 'Very dense'],
+    ]
+  },
+  canopy: {
+    title: 'Canopy height anomaly',
+    stops: [
+      ['#E86A4B', 'Shorter than neighbors'],
+      ['#F3ECDC', 'Slightly shorter'],
+      ['#0E6F6B', 'Normal'],
+      ['#1FA38E', 'Taller'],
+      ['#4FD1C5', 'Much taller'],
+      ['#F4B544', 'Anomalously tall'],
+    ]
+  },
+  roads: {
+    title: 'Roads',
+    stops: [
+      ['#F4B544', 'Primary'],
+      ['#9BE7D8', 'Secondary'],
+    ]
+  },
+};
+
+let activeOverlay = null; // only one at a time
+
+
+function updateOverlayLegend() {
+  const el = document.getElementById('overlay-legend');
+  if (!activeOverlay) {
+    el.style.display = 'none';
+    return;
+  }
+  const leg = OVERLAY_LEGENDS[activeOverlay];
+  if (!leg) { el.style.display = 'none'; return; }
+  let html = `<div class="ol-title">${leg.title}</div>`;
+  for (const [color, label] of leg.stops) {
+    html += `<div class="ol-row"><div class="ol-swatch" style="background:${color}"></div><span class="ol-label">${label}</span></div>`;
+  }
+  el.innerHTML = html;
+  el.style.display = 'block';
+}
+
+// Remove all current overlays from map
+function clearOverlays() {
+  if (demOverlay) try { map.removeLayer(demOverlay); } catch(e) {}
+  if (ageOverlay) try { map.removeLayer(ageOverlay); } catch(e) {}
+  if (lithOverlay) try { map.removeLayer(lithOverlay); } catch(e) {}
+  lineamentLines.forEach(l => { try { map.removeLayer(l); } catch(e) {} });
+  if (linDensityOverlay) try { map.removeLayer(linDensityOverlay); } catch(e) {}
+  if (ndviOverlay) try { map.removeLayer(ndviOverlay); } catch(e) {}
+  if (canopyOverlay) try { map.removeLayer(canopyOverlay); } catch(e) {}
+  roadMarkers.forEach(m => { try { map.removeLayer(m); } catch(e) {} });
+  document.getElementById('ndvi-controls').style.display = 'none';
+}
+
+const OVERLAY_TOGGLE_MAP = {
+  dem: 'toggle-dem', age: 'toggle-age', lith: 'toggle-lith',
+  lineaments: 'toggle-lineaments', linDensity: 'toggle-lin-density',
+  ndvi: 'toggle-ndvi', canopy: 'toggle-canopy', roads: 'toggle-roads',
+};
+function uncheckAllToggles(except) {
+  Object.entries(OVERLAY_TOGGLE_MAP).forEach(([key, id]) => {
+    if (key !== except) document.getElementById(id).checked = false;
+  });
+}
+
+function activateOverlay(id, checked) {
+  if (checked) {
+    clearOverlays();
+    uncheckAllToggles(id);
+    activeOverlay = id;
+    // Switch to white basemap for overlays
+    if (currentBase !== whiteTiles) {
+      map.removeLayer(currentBase);
+      currentBase = whiteTiles;
+      currentBase.addTo(map);
+    }
+  } else {
+    activeOverlay = null;
+    // Back to satellite
+    if (currentBase !== satTiles) {
+      map.removeLayer(currentBase);
+      currentBase = satTiles;
+      currentBase.addTo(map);
+    }
+  }
+  updateOverlayLegend();
+}
+
 // ── Load data and initialize ─────────────────────────────────────────────
 fetch('data/cenotes_unified.json')
   .then(r => r.json())
@@ -725,21 +893,33 @@ initCustomSelect('sort-btn', 'sort-menu', v => { sortBy = v; render(); });
 
 
 // Layer toggles
-document.getElementById('toggle-dem').addEventListener('change', e => {
-  if (!demOverlay) return;
-  if (e.target.checked) demOverlay.addTo(map); else map.removeLayer(demOverlay);
-});
-document.getElementById('toggle-age').addEventListener('change', e => {
-  if (!ageOverlay) return;
-  if (e.target.checked) ageOverlay.addTo(map); else map.removeLayer(ageOverlay);
-});
-document.getElementById('toggle-lith').addEventListener('change', e => {
-  if (!lithOverlay) return;
-  if (e.target.checked) lithOverlay.addTo(map); else map.removeLayer(lithOverlay);
-});
+// Unified overlay radio handler
+function showOverlay(value) {
+  clearOverlays();
 
-document.getElementById('toggle-lineaments').addEventListener('change', e => {
-  if (e.target.checked) {
+  if (value === 'satellite') {
+    activeOverlay = null;
+    if (currentBase !== satTiles) {
+      map.removeLayer(currentBase);
+      currentBase = satTiles;
+      currentBase.addTo(map);
+    }
+    updateOverlayLegend();
+    return;
+  }
+
+  activeOverlay = value;
+  if (currentBase !== whiteTiles) {
+    map.removeLayer(currentBase);
+    currentBase = whiteTiles;
+    currentBase.addTo(map);
+  }
+
+  if (value === 'dem' && demOverlay) demOverlay.addTo(map);
+  if (value === 'age' && ageOverlay) ageOverlay.addTo(map);
+  if (value === 'lith' && lithOverlay) lithOverlay.addTo(map);
+
+  if (value === 'lineaments') {
     if (!lineamentsLoaded) {
       fetch('data/lineaments_display.json').then(r=>r.json()).then(lins => {
         lins.forEach(l => {
@@ -759,59 +939,53 @@ document.getElementById('toggle-lineaments').addEventListener('change', e => {
     } else {
       lineamentLines.forEach(l => l.addTo(map));
     }
-  } else {
-    lineamentLines.forEach(l => map.removeLayer(l));
   }
-});
 
-document.getElementById('toggle-lin-density').addEventListener('change', e => {
-  if (e.target.checked) {
+  if (value === 'linDensity') {
     if (!linDensityLoaded) {
       fetch('data/lineament_density_bounds.json').then(r=>r.json()).then(b => {
         const bounds = [[b.south, b.west],[b.north, b.east]];
         linDensityOverlay = L.imageOverlay('data/lineament_density_overlay.webp', bounds, {
-          opacity: 0.7, interactive: false
+          opacity: 0.9, interactive: false
         }).addTo(map);
         linDensityLoaded = true;
       }).catch(() => console.log('lineament density overlay not found'));
     } else if (linDensityOverlay) {
       linDensityOverlay.addTo(map);
     }
-  } else if (linDensityOverlay) {
-    map.removeLayer(linDensityOverlay);
   }
-});
 
-document.getElementById('toggle-ndvi').addEventListener('change', e => {
-  const controls = document.getElementById('ndvi-controls');
-  if (e.target.checked) {
-    controls.style.display = 'block';
+  if (value === 'ndvi') {
+    document.getElementById('ndvi-controls').style.display = 'block';
     if (!ndviLoaded) {
       fetch('data/ndvi_overlay_bounds.json').then(r=>r.json()).then(b => {
         const bounds = [[b.south, b.west],[b.north, b.east]];
         const idx = parseInt(document.getElementById('ndvi-season').value);
         ndviOverlay = L.imageOverlay(NDVI_URLS[idx], bounds, {
-          opacity: 0.7, interactive: false
+          opacity: 0.9, interactive: false
         }).addTo(map);
         ndviLoaded = true;
       }).catch(() => console.log('NDVI overlay not found'));
     } else if (ndviOverlay) {
       ndviOverlay.addTo(map);
     }
-  } else {
-    controls.style.display = 'none';
-    if (ndviOverlay) map.removeLayer(ndviOverlay);
   }
-});
 
-document.getElementById('ndvi-season').addEventListener('input', e => {
-  if (ndviOverlay) {
-    ndviOverlay.setUrl(NDVI_URLS[parseInt(e.target.value)]);
+  if (value === 'canopy') {
+    if (!canopyLoaded) {
+      fetch('data/canopy_overlay_bounds.json').then(r=>r.json()).then(b => {
+        const bounds = [[b.south, b.west],[b.north, b.east]];
+        canopyOverlay = L.imageOverlay('data/canopy_overlay.webp', bounds, {
+          opacity: 0.9, interactive: false
+        }).addTo(map);
+        canopyLoaded = true;
+      }).catch(() => console.log('canopy overlay not found'));
+    } else if (canopyOverlay) {
+      canopyOverlay.addTo(map);
+    }
   }
-});
 
-document.getElementById('toggle-roads').addEventListener('change', e => {
-  if (e.target.checked) {
+  if (value === 'roads') {
     if (!roadsLoaded) {
       fetch('data/roads.json').then(r=>r.json()).then(roads => {
         roads.forEach(r => {
@@ -826,8 +1000,18 @@ document.getElementById('toggle-roads').addEventListener('change', e => {
     } else {
       roadMarkers.forEach(m => m.addTo(map));
     }
-  } else {
-    roadMarkers.forEach(m => map.removeLayer(m));
+  }
+
+  updateOverlayLegend();
+}
+
+document.querySelectorAll('input[name="overlay"]').forEach(radio => {
+  radio.addEventListener('change', e => showOverlay(e.target.value));
+});
+
+document.getElementById('ndvi-season').addEventListener('input', e => {
+  if (ndviOverlay) {
+    ndviOverlay.setUrl(NDVI_URLS[parseInt(e.target.value)]);
   }
 });
 

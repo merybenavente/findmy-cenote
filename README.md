@@ -4,9 +4,9 @@
 
 # Find My Cenote
 
-An enriched dataset of 1,369 cenotes in the Yucatan Peninsula, combining 10 open data sources with terrain analysis, vegetation indices, fracture proximity, and more.
+An open data project to map and enrich every cenote in the Yucatan Peninsula. The **Cenote Atlas** dataset aggregates 1,369 cenotes from 10 open data sources with terrain analysis, vegetation indices, fracture proximity, and more.
 
-[Live Explorer](TODO) | [Dataset on HuggingFace](TODO) | [Dataset on Zenodo](TODO)
+[Live Explorer](TODO) | [Cenote Atlas on HuggingFace](TODO) | [Cenote Atlas on Zenodo](TODO)
 
 ## Why
 
@@ -52,6 +52,14 @@ The Yucatan Peninsula holds a ring of thousands of cenotes — natural sinkholes
 
 Logo and visual identity designed with Claude. Explorations and source files in [`design/`](design/).
 
+
+## Next steps
+
+Surface-level remote sensing (satellite imagery, LiDAR DEMs, vegetation indices) can characterize cenote locations but cannot predict subsurface depth — cenote depth depends on fracture geometry, karst dissolution, and water table structure that are invisible from above. Possible directions for a future round:
+
+- **Ground truth**: measure depth at cenotes currently without data (only 26 of 1,369 have known depth)
+- **Gravimetry / GPR**: subsurface geophysics data could reveal void geometry where satellite data cannot
+- **Expand coverage**: the current dataset only covers Yucatan state — Quintana Roo and Campeche have cenotes too
 
 ## License
 
