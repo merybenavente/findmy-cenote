@@ -46,7 +46,7 @@
     </svg>
   </g>
 
-  <!-- Wordmark (centered in right half) -->
-  <text x="500" y="120" font-family="'Space Grotesk', system-ui, sans-serif" font-weight="700" font-size="52" letter-spacing="-0.02em" fill="#FAF6EC" text-anchor="middle">FindMy <tspan fill="#9BE7D8">Cenote</tspan></text>
-  <text x="500" y="152" font-family="'JetBrains Mono', monospace" font-size="12" letter-spacing="0.18em" fill="rgba(250,246,236,0.55)" text-anchor="middle">YUCATÁN · CENOTE ATLAS</text>
+  <!-- Wordmark (centered in right half, vertically aligned with logo center) -->
+  <text x="530" y="118" font-family="'Space Grotesk', system-ui, sans-serif" font-weight="700" font-size="52" letter-spacing="-0.02em" fill="#FAF6EC" text-anchor="middle">FindMy <tspan fill="#9BE7D8">Cenote</tspan></text>
+  <text x="530" y="148" font-family="'JetBrains Mono', monospace" font-size="12" letter-spacing="0.18em" fill="rgba(250,246,236,0.55)" text-anchor="middle">YUCATÁN · CENOTE ATLAS</text>
 </svg>
