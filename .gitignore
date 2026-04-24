@@ -10,6 +10,15 @@ wheels/
 .venv
 .python-version
 
-# Data lives on HuggingFace, not in the repo
-data/
+# Data — dataset lives on HuggingFace, only dashboard assets in repo
+data/*
+!data/*_overlay.webp
+!data/*_overlay.png
+!data/*_bounds.json
+!data/lineaments_display.json
+!data/roads.json
+data/ndvi_dry_overlay.webp
+data/ndvi_wet_overlay.webp
+data/dem_overlay.png
+data/dem_overlay_sm.png
 .DS_Store
